@@ -1,0 +1,28 @@
+// Transform query for Custom Logs via AMA Data Connector to parse cowrie JSON logs
+source
+| extend eventData = parse_json(RawData)
+| extend 
+    TimeGenerated = todatetime(eventData.timestamp),
+    eventid = tostring(eventData.eventid),
+    src_ip = tostring(eventData.src_ip),
+    src_port = toint(eventData.src_port),
+    dst_ip = tostring(eventData.dst_ip),
+    dst_port = toint(eventData.dst_port),
+    session = tostring(eventData.session),
+    protocol = tostring(eventData.protocol),
+    version = tostring(eventData.version),
+    hassh = tostring(eventData.hassh),
+    hasshAlgorithms = tostring(eventData.hasshAlgorithms),
+    kexAlgs = tostring(eventData.kexAlgs),
+    keyAlgs = tostring(eventData.keyAlgs),
+    encCS = tostring(eventData.encCS),
+    macCS = tostring(eventData.macCS),
+    compCS = tostring(eventData.compCS),
+    langCS = tostring(eventData.langCS),
+    username = tostring(eventData.username),
+    password = tostring(eventData.password),
+    message = tostring(eventData.message),
+    sensor = tostring(eventData.sensor),
+    timestamp = todatetime(eventData.timestamp),
+    duration = toint(eventData.duration),
+	input = tostring(eventData.input)
