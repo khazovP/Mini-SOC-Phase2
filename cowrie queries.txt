@@ -1,0 +1,57 @@
+// Top SSH client version by country
+cowrie_CL
+| extend EventData = parse_json(RawData)
+| extend 
+    SourceIP = tostring(EventData.src_ip),
+    EventID = tostring(EventData.eventid),
+    Version = tostring(EventData.version)
+| where EventID == "cowrie.client.version"
+| where isnotempty(SourceIP) and isnotempty(Version)
+| extend GeoInfo = geo_info_from_ip_address(SourceIP)
+| extend Country = tostring(GeoInfo.country)
+| where isnotempty(Country)
+| summarize ConnectionCount = count() by Country, Version
+| order by Country asc, ConnectionCount desc
+// Create a string concatenating the rank within each country
+| extend CountryGroup = Country
+| serialize rank = row_number() 
+| where rank == 1 or prev(CountryGroup) != CountryGroup
+| project Country, TopVersion = Version, ConnectionCount
+| order by Country asc
+
+
+// Most popular command
+cowrie_CL
+| extend eventData = parse_json(RawData)
+| extend Sensor = tostring(eventData.sensor),
+    EventID = tostring(eventData.eventid),
+    Username = tostring(eventData.username),
+    Password = tostring(eventData.password),
+    Command = tostring(eventData.input)
+| where EventID in ("cowrie.command.input")
+| summarize count() by tostring(Command)
+| sort by count_ desc
+| limit 10
+
+
+// Insights about SSH fingerprint 0a07365cc01fa9fc82608ba4019af499
+cowrie_CL
+| extend EventData = parse_json(RawData)
+| extend 
+    SourceIP = tostring(EventData.src_ip),
+    EventID = tostring(EventData.eventid),
+    Version = tostring(EventData.version),
+    Hassh = tostring(EventData.hassh),
+    Timestamp = todatetime(EventData.timestamp)
+| where Hassh == "0a07365cc01fa9fc82608ba4019af499"
+| where isnotempty(SourceIP)
+| extend GeoInfo = geo_info_from_ip_address(SourceIP)
+| extend Country = tostring(GeoInfo.country)
+| summarize 
+    EventCount = count(), 
+    IPAddresses = makelist(SourceIP), 
+    Countries = makelist(Country), 
+    ClientVersions = makelist(Version), 
+    FirstSeen = min(Timestamp), 
+    LastSeen = max(Timestamp)
+| project EventCount, IPAddresses, Countries, ClientVersions, FirstSeen, LastSeen

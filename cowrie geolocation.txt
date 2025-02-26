@@ -1,0 +1,30 @@
+// Map
+let CowrieData = cowrie_CL
+| extend EventData = parse_json(RawData)  // Parse JSON logs
+| extend SourceIP = tostring(EventData.src_ip)  // Extract attacker IP
+| where isnotempty(SourceIP);
+
+// Get geo information using geo_info_from_ip_address()
+let GeoData = CowrieData
+| extend GeoInfo = geo_info_from_ip_address(SourceIP)
+| extend Country = tostring(GeoInfo.country), 
+         Latitude = todouble(GeoInfo.latitude), 
+         Longitude = todouble(GeoInfo.longitude)
+| where isnotempty(Country) and isnotempty(Latitude) and isnotempty(Longitude)
+| summarize AttackCount = count() by SourceIP, Country, Latitude, Longitude
+| extend FriendlyLocation = strcat(Country, " (", SourceIP, ")");
+
+GeoData
+| project SourceIP, Country, Latitude, Longitude, AttackCount, FriendlyLocation
+| order by AttackCount desc
+
+
+// Geo chart
+cowrie_CL
+| extend EventData = parse_json(RawData)
+| extend SourceIP = tostring(EventData.src_ip)
+| where isnotempty(SourceIP)
+| extend geo_info = geo_info_from_ip_address(SourceIP)
+| extend Country = tostring(geo_info.country)
+| summarize AttackCount = count() by Country
+| sort by AttackCount desc
