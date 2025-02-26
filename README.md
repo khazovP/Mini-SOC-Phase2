@@ -70,12 +70,15 @@ Now that our log collector is up and running, we need to configure the firewall 
 Copy log format for every traffic type into corresponding field.
 
 ![2 1 1 syslog profile format](https://github.com/user-attachments/assets/4d939579-928b-47eb-8921-8a10e96a5161)
-![2 1 2 syslog profile format](https://github.com/user-attachments/assets/91b0e0f0-34de-493e-a200-448fa216c9c7) 
+
+![2 1 2 syslog profile format](https://github.com/user-attachments/assets/91b0e0f0-34de-493e-a200-448fa216c9c7)
+
 ![2 1 3 syslog profile format](https://github.com/user-attachments/assets/fe3e3c0d-13cd-4cac-b884-8d432422d567)
 
 4. Next, go to **Objects > Log Forwarding Profile** and create match lists for different log types, selecting our syslog server as the forwarding destination.
 
 ![2 2 forwarding profile](https://github.com/user-attachments/assets/e3a9f512-7d6b-4733-8ac7-164022e45689)
+
 ![2 2 1 forwarding profiles](https://github.com/user-attachments/assets/ee788a80-1fdb-49a5-854d-528218e91758)
 
 5. Apply this log forwarding profile to all security policies.
@@ -148,6 +151,7 @@ Let's take advantage of visualization capabilities of Sentinel.
 This dashboard provides a great visual overview of firewall activity, including traffic trends, security threats, and system performance. So far, no threat logs are available—because we haven’t configured detection policies and not exposed any hosts to risk yet. That will come later when we test threat detection capabilities.
 
 ![5 3 pa workbook](https://github.com/user-attachments/assets/49874b08-b1d8-420e-b1f1-2a22bea28056)
+
 ![5 4 pa workbook](https://github.com/user-attachments/assets/361472d1-b950-4a12-954f-958d769e6cee)
 
 ---
@@ -197,6 +201,7 @@ ssh test@10.0.30.15 -p 2222
 Cowrie successfully logs login attempts, credentials, and even commands executed by attackers.
 
 ![7 4 honeypot test](https://github.com/user-attachments/assets/df41f8b9-33e1-4318-810d-493fbb5c7a46)
+
 ![7 5 honeypot test](https://github.com/user-attachments/assets/f38e4565-c140-4451-938b-e0e94739c6d8)
 
 ---
@@ -255,6 +260,7 @@ However, the queries in the workbook do not parse JSON logs by default. Each que
 And Voila! We have a nice dashboard with statistics.
 
 ![11 1 workbook](https://github.com/user-attachments/assets/07b46e00-29a5-42c4-8158-2da24359ac90)
+
 ![11 2](https://github.com/user-attachments/assets/62ee8e66-a550-4897-aef4-38300b991d15)
 
 ---
