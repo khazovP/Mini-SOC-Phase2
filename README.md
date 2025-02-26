@@ -306,11 +306,9 @@ For simplicity, I decide to move on with first approach.
 ### 2.5) Final Adjustments and Deployment
 
 1. Change the honeypot VM's SSH port to `8222` (to avoid conflicts with Cowrie).
-2. 
 ![15 2](https://github.com/user-attachments/assets/2affe366-d3bc-4ae2-af82-41ab65bb89b2)
 
 3. Use `iptables` to forward traffic from `port 22` to `port 2222`.
-4. 
 ![15 3](https://github.com/user-attachments/assets/ed426a94-5d15-499d-ab05-b23dfc36636b)
 
 5. Install `ufw` and allow only following traffic to our Honeypot - this is important, because VM will be exposed to internet:
@@ -319,17 +317,103 @@ For simplicity, I decide to move on with first approach.
    ufw allow 8222 from 192.168.100.0/24
    ```
 6. Update Azure routing so `Private1` has a default route to **Internet** (not VirtualAppliance).
-7. 
 ![15 4](https://github.com/user-attachments/assets/da5b2d50-2e21-4d3d-b85c-bf48adba6692)
 
 8. Attach a **public IP** to the honeypot VM.
-
 ---
 
 ## Conclusion
 
-Everything is now set up! The honeypot and firewall log collection system is fully operational. I will let it run for some time, waiting for attack attempts. In the meantime, I'll dive deeper into NAT issue. Hope we can get someone trapped in our Honeypot.
-
+Everything is now set up! The honeypot and firewall log collection system is fully operational. I will let it run for some time, waiting for attack attempts. In the meantime, I'll dive deeper into Azure routing issue. 
+Hope we can get someone trapped in our Honeypot.
 Thankfully, there’s always someone scanning SSH ports! 😃
 ![13 pa ssh logs](https://github.com/user-attachments/assets/46d0f7a6-6ea3-41d8-bf24-fd61ee61bb09)
+
+## Honeypot Attack Analysis – Insights from 3 Days of Data
+
+I let **Cowrie** run for approximately **three days**, collecting attack data. To better visualize the results, I added a **geolocation map** and a **chart by country** to my dashboard (I will upload queries to repo). 
+![1 honeypot](https://github.com/user-attachments/assets/cd14d304-9bd0-47c6-80f7-97d9d1c2adb9)
+
+#### **Top Attack Sources**  
+Unsurprisingly, **China** holds the leading position, with **3,000+ authentication attempts** in just three days. (I expected North Korea, but oh well! 😆)  
+
+#### **Brute Force Trends & Common Credentials**  
+- **Top username:** `"root"` (This has been the case for years.)
+- **Most common passwords:** Simple, unchanged over the years.
+- **Conclusion:** Brute-force attacks remain focused on exploiting **basic security flaws**, which, despite being trivial, are still widespread.  
+---
+![2 honeypot log pass](https://github.com/user-attachments/assets/f74777db-5b92-45be-9c0b-9bb906e5ab42)
+
+## **Interesting Observations**  
+
+### **Automated Scripted Attacks**
+Commands are executed **with minimal delay**, indicating they are run as part of a **script or program** rather than manually.  
+![3 honeypot commands mikrotik](https://github.com/user-attachments/assets/4742eb8e-17c4-431f-ae4d-e3aa34ca43b2)
+
+#### **MikroTik Router Targeting**  
+A suspicious command was frequently executed:  
+```bash
+/ip cloud print
+```
+- This checks if **Dynamic DNS (DynDNS)** is configured on a **MikroTik router**.  
+- If attackers are building a **botnet of routers**, this command might help them maintain access to devices with **dynamic IPs**.  
+
+#### **Modem & Out-of-Band (OOB) Access Checks**  
+Some commands appeared to check for **connected mobile network modems**, which are sometimes used as **out-of-band access** devices:  
+```bash
+ls -la /dev/ttyGSM* /dev/ttyUSB-mod* /var/spool/sms/* /var/log/smsd.log /etc/smsd.conf* /usr/bin/qmuxd /var/qmux_connect_socket /etc/config/simman /dev/modem* /var/config/sms/*
+```  
+
+#### **Cryptominer Detection?**  
+One particularly interesting command:  
+```bash
+ps | grep '[Mm]iner'
+ps -ef | grep '[Mm]iner'
+```
+- This suggests that attackers **check for existing mining software**.  
+- Possible explanation: They want to know if the device has **already been compromised by another hacker**.  
+
+---
+
+## **Most Popular Attack Commands**  
+
+The **top executed command** was simple **system reconnaissance**:  
+```bash
+uname -s -v -n -r -m
+```
+This suggests that attackers are merely **gathering system info**, likely **profiling vulnerable machines** before deciding on their next steps.  
+
+---
+![4 most popular command](https://github.com/user-attachments/assets/8ed4acc7-8c89-4370-8d63-3ab688b3c74d)
+
+## **Brute Force Tools – SSH Client Fingerprinting**  
+
+### **GO-based SSH Brute Force Tool**  
+The most common **SSH client fingerprint** in the attacks:  
+```plaintext
+SSH-2.0-GO
+```
+- This is from the **Go (Golang) standard SSH library**.  
+- No widely known open-source brute-force tool uses this fingerprint, so it could be a **custom or private tool**.  
+![5 top client](https://github.com/user-attachments/assets/68d6e272-a760-4305-8353-f337220d85cb)
+
+#### **Correlation Query Findings**  
+I created **correlation queries** (with some AI assistance 😏) to analyze this SSH client across different attack sources.  
+- The **GO-based SSH client** was the most **widely used across all countries**.
+- It appears to be the **preferred tool among almost all attackers**.
+![6 honeypot top client by country](https://github.com/user-attachments/assets/6e1cec7b-a7e4-4cea-b638-3677a5619161)
+
+#### **Persistent Attacker Identified**  
+- One particular **fingerprint stood out**, generating **significantly more events** than all others.  
+- At first, I assumed this was from a **highly active attacker in China**.  
+- However, **after running further correlation queries**, I discovered the **real origin**—this attacker is **based in the US**, operating from a **single IP address**.  
+![9 top finger identified](https://github.com/user-attachments/assets/31899ebb-ce5a-48a3-b62a-df865e484713)
+
+---
+
+### **Final Thoughts**  
+This short experiment confirmed that brute-force attacks remain **highly automated**, with attackers primarily:  
+👉 **Scanning for common misconfigurations**  
+👉 **Profiling vulnerable systems**  
+👉 **Checking for existing infections (miners, botnets, etc.)**  
 
