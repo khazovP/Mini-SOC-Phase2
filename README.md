@@ -160,7 +160,7 @@ This dashboard provides a great visual overview of firewall activity, including 
 
 For the honeypot, Cowrie was chosen due to its popularity and effectiveness. Cowrie is a medium-to-high interaction SSH and Telnet honeypot designed to log brute force attacks and capture attacker activity.
 
-Since the honeypot is placed in a DMZ network, a DNAT rule is required to forward incoming SSH traffic to it. However, this alone was not sufficient—traffic was not reaching the honeypot. After some troubleshooting, I made assumption that Azure does not handle ingress and egress traffic on the same interface well. To work around this, an SNAT rule was introduced to make Azure believe the traffic originated from the firewall. However, this method obscures the attacker's real IP address, which is crucial for analysis. To solve this, the honeypot was moved to another subnet (e.g., `Private1`).
+Since the honeypot is placed in a DMZ network, a DNAT rule is required to forward incoming SSH traffic to it. However, this was not enough - traffic was not reaching Honeypot. After quick troubleshooting I thought that maybe problem is with hairpin traffic (ingress and egress on the same interface, even though in Trust zone it works normally), so I created SNAT to trick Azure into thinking that traffic originated from FW. But this makes no sense, as we will not see real attacker's IP. So I decided to move our Honeypot to another subnet - Private1 for example.  However, this method obscures the attacker's real IP address, which is crucial for analysis. To solve this, the honeypot was moved to another subnet (e.g., `Private1`).
 
 ⚠ **Security Warning:** Placing a honeypot in a trusted zone poses a security risk. This approach is acceptable in a lab environment but should be avoided in production.
 
@@ -300,7 +300,10 @@ auth_class_parameters = 20, 100, 100
 
 #### Troubleshooting NAT Issues
 
-I faced the same issue as before moving Honeypot to Trust zone. After configuring DNAT, traffic still did not reach the honeypot. After extensive troubleshooting, it made assumption that Azure was blocking packets with public IPs as the source, likely due to anti-spoofing protection (yes, I know, that's pretty illogical). Using SNAT resolved the issue but masked attacker IPs. I was left with two options:
+I faced the same issue as before moving Honeypot to Trust zone. After configuring DNAT, traffic still did not reach the honeypot. After extensive troubleshooting, my assumption is that Azure may be handling Intranet traffic differently when it comes from an external source. - When the firewall DNATs without SNAT, the source IP is still the original public IP, and maybe some Azure security measure come into play.
+- With SNAT, the traffic looks like it originated inside the VNet, so Azure delivers it without issue. Using SNAT resolved the issue but masked attacker IPs.
+
+I was left with two options:
 
 1. **Assign a public IP to the honeypot** (bypassing firewall inspection).
 2. **Create a Sentinel query to correlate firewall and honeypot logs** to reconstruct attacker IPs.
