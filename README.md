@@ -2,6 +2,8 @@
 
 In this phase of project we will set up a log collector for the firewall, set up honeypot and then forward all logs to Microsoft Sentinel for centralized analysis. By the end of this, we'll have a fully integrated logging system feeding real-time data into Sentinel.
 
+![Topology1 drawio](https://github.com/user-attachments/assets/35d8d0ff-47f7-4c19-b994-051d005a5af9)
+
 ### 1) Setting Up Log Collector for the Firewall
 
 #### 1.1) Installing and Configuring Rsyslog
